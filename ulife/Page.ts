@@ -24,7 +24,11 @@ export abstract class UlifePage {
   protected onRequest: Handler<HTTPRequest> = (request) => {
     const requestUrl = new URL(request.url());
 
-    if (requestUrl.hostname.includes(UlifePage.ULIFE_HOSTNAME)) {
+    if (
+      requestUrl.hostname.includes(UlifePage.ULIFE_HOSTNAME) ||
+      // Fix error with lessons containing the podcast module that breaks the page if the request is blocked
+      requestUrl.hostname.includes('soundcloud.com')
+    ) {
       request.continue({ url: requestUrl.href });
     } else {
       request.abort();
