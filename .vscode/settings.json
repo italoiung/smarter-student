@@ -1,0 +1,17 @@
+{
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "search.exclude": {
+    "package-lock.json": true
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": [
+    "source.fixAll.eslint",
+  ],
+  "eslint.useFlatConfig": true,
+  "eslint.runtime": "bun",
+  "eslint.execArgv": ["--bun"],
+  "eslint.trace.server": "messages",
+  "eslint.workingDirectories": [{ "mode": "auto" }]
+}
