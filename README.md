@@ -32,3 +32,10 @@ To run:
 ```bash
 bun run index.ts
 ```
+
+## Roadmap
+- [x] Open school homepage, wait for logged-in dashboard and then navigate to the virtual classroom environment.
+- [x] Set up entities to handle each navigation step and intercept its network requests
+- [x] Scrape summary at the bottom of every lesson and then write its content in a markdown file
+- [ ] Scrape only text and images from each lesson and then add to the markdown file
+- [ ] Generate richer summary using AI
