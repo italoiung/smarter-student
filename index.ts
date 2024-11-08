@@ -19,7 +19,12 @@ const browser = await launch({
 
 const [firstTab] = await browser.pages();
 
-await firstTab.goto('https://estudantesuniritter.ead.br/');
+await firstTab.goto('https://estudantesuniritter.ead.br/', { waitUntil: 'networkidle0' });
+try {
+  await firstTab.locator('.modal-card.is-active button').setTimeout(5000).click();
+} catch {
+  console.log('Gladly, there was not an ad.');
+}
 await firstTab.locator('.card-button.app-card.ulife').click();
 const secondTab = await getNewTarget(browser);
 
