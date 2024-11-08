@@ -37,5 +37,8 @@ bun run index.ts
 - [x] Open school homepage, wait for logged-in dashboard and then navigate to the virtual classroom environment.
 - [x] Set up entities to handle each navigation step and intercept its network requests
 - [x] Scrape summary at the bottom of every lesson and then write its content in a markdown file
-- [ ] Scrape only text and images from each lesson and then add to the markdown file
+- [x] Scrape only text and images from each lesson and then add to the markdown file
+- [x] Remove from lesson irrelevant modules
+- [ ] Improve lesson formatting using individual classes for each HTML module
+- [ ] Add lesson index using its headings
 - [ ] Generate richer summary using AI
