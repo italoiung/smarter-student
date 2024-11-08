@@ -5,18 +5,14 @@ export class UlifeLesson extends UlifePage {
   constructor(
     page: Page,
     protected _pageHref: string,
-    private name: string,
   ) {
     super(page);
   }
 
-  private _content: { heading: string; body: string }[] = [];
+  private _content: string[] = [];
 
   public get content(): string {
-    return this._content.reduce(
-      (acc, { heading, body }) => acc + `## ${heading}\n` + `${body}\n\n`,
-      `# ${this.name}\n\n`,
-    );
+    return this._content.join('\n\n');
   }
 
   public async init() {
@@ -39,31 +35,49 @@ export class UlifeLesson extends UlifePage {
         previewUrl = new URL(previewButtonHref.toString()).pathname;
       }
 
-      await this.page.goto(previewUrl, { waitUntil: 'domcontentloaded' });
+      await this.page.goto(previewUrl, { waitUntil: 'networkidle0' });
     }
 
-    try {
-      await this.page.locator('.manage_study_action:last-of-type > div > iframe').setTimeout(5000).wait();
-    } catch {
-      console.log(
-        `It seems that there's no AMP summary on this lesson, you should create a summary for ${this.name} using its .manage_study_action elements.`,
-      );
-    }
+    await this.page.locator('.workbench .manage_study_action').wait();
+
+    const htmlElements = await this.page.$$eval(`.workbench .topic-title, .workbench .e-title, .workbench .T-QUADRO, .workbench .T-TABELA,
+      .workbench .manage_study_action:not(.manage_study_bloco) > .slider-reborn .slide-reborn .figura,
+      .workbench .manage_study_action:not(.manage_study_bloco) > .slider-reborn .slide-reborn .slide-texto,
+      .workbench .manage_study_action:not(.manage_study_bloco) > *:not(.manage_study_list, .manage_study_comments_container, 
+        .OBJETIVOS, .slider-reborn, .video-reborn, .podcast-reborn, .checker, .fillin, .flipCard, .flipper, .judge, .ordenar, .quiz, .trilha)`,
+      (elements) =>
+        elements.map((element) => {
+          const textContent = element.textContent?.trim().replace(/(\n\s+)|(\n*\t+\n*\s*)/gm, '\n');
+          if (element.classList.contains('topic-title')) return `# ${textContent}`;
+          if (element.classList.contains('e-title')) return `## ${textContent}`;
+          if (element.classList.contains('T-QUADRO') || element.classList.contains('T-TABELA')) return `### ${textContent}`;
+          if (element.classList.contains('quote')) return `> ${textContent}`;
+          if (element.classList.contains('apostila-reborn') || element.classList.contains('saibamais-reborn')) return `[${textContent}](${element.querySelector('a')?.href})`;
+          const imageContent = element.querySelector('img');
+          if (!imageContent) return `${textContent}`;
+          if (element.classList.contains('figura')) return `### ${textContent}\n![${imageContent.alt}](${imageContent.src})`;
+          return `${textContent}\n![${imageContent.alt}](${imageContent.src})`
+        }),
+    );
+
+    this._content = [...this._content, ...htmlElements];
 
     const ampFrameHandler = await this.page.$('.manage_study_action:last-of-type > div > iframe');
     const ampFrame = await ampFrameHandler?.contentFrame();
 
     if (ampFrame) {
       const ampContent = await ampFrame.$$eval('amp-story-page', (elements) =>
-        elements.map((element) => {
-          const heading = element.querySelector('amp-story-grid-layer[template="vertical"]')?.textContent?.trim() || '';
-          const body = element.querySelector('amp-story-grid-layer[template="vertical"].bottom')?.textContent?.trim() || '';
+        elements.map((element) => 
+          {
+            const heading = element.querySelector('amp-story-grid-layer[template="vertical"]')?.textContent?.trim() || '';
+            const body = element.querySelector('amp-story-grid-layer[template="vertical"].bottom')?.textContent?.trim() || '';
 
-          return { heading, body };
-        }),
+            return `### ${heading}\n${body}`;
+          }
+        ),
       );
 
-      this._content = ampContent;
+      this._content = [...this._content, '## Resumo', ...ampContent];
     }
   }
 }

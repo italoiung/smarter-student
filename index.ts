@@ -44,7 +44,7 @@ for (const { name: subjectName, url: subjectUrl } of dashboard.subjects) {
   await subject.ready;
 
   for (const { name: lessonName, url: lessonUrl } of subject.lessons) {
-    const lesson = new UlifeLesson(await browser.newPage(), lessonUrl, lessonName);
+    const lesson = new UlifeLesson(await browser.newPage(), lessonUrl);
 
     await lesson.init();
 
