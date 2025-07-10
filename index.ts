@@ -2,40 +2,36 @@ import { launch } from 'puppeteer-core';
 import { UlifeDashboard } from './ulife/Dashboard';
 import { UlifeSubject } from './ulife/Subject';
 import { UlifeLesson } from './ulife/Lesson';
-import { getNewTarget } from './utils/getNewTarget';
 
 const browser = await launch({
   executablePath: `${process.env.CHROME_EXECUTABLE_PATH}`,
   headless: false,
   defaultViewport: null,
   args: [
-    `--user-data-dir=${process.env.CHROME_DATA_DIR}`,
-    '--profile-directory=Default',
+    `--user-data-dir=${process.env.CHROME_DATA_DIR}/Profile_2`,
     '--no-zygote',
     '--no-sandbox',
   ],
   ignoreDefaultArgs: ['--enable-automation'],
 });
 
-const [firstTab] = await browser.pages();
+const [main] = await browser.pages();
 
-await firstTab.goto('https://estudantesuniritter.ead.br/', { waitUntil: 'networkidle0' });
+await main.goto('https://estudantesuniritter.ead.br/', { waitUntil: 'networkidle0' });
 try {
-  await firstTab.locator('.modal-card.is-active button').setTimeout(5000).click();
+  await main.locator('.modal-card.is-active button').setTimeout(5000).click();
 } catch {
   console.log('Gladly, there was not an ad.');
 }
-await firstTab.locator('.card-button.app-card.ulife').click();
-const secondTab = await getNewTarget(browser);
 
-if (!secondTab) process.exit(1);
+await main.locator('.card-button.app-card.ulife').click();
+await main.waitForNavigation();
 
 const dashboard = new UlifeDashboard(await browser.newPage());
 await dashboard.init();
 await dashboard.ready;
 
-await firstTab.close();
-await secondTab.close();
+await main.close();
 
 for (const { name: subjectName, url: subjectUrl } of dashboard.subjects) {
   const subject = new UlifeSubject(await browser.newPage(), subjectUrl);
