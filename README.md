@@ -38,7 +38,12 @@ bun run index.ts
 - [x] Set up entities to handle each navigation step and intercept its network requests
 - [x] Scrape summary at the bottom of every lesson and then write its content in a markdown file
 - [x] Scrape only text and images from each lesson and then add to the markdown file
-- [x] Remove from lesson irrelevant modules
-- [ ] Improve lesson formatting using individual classes for each HTML module
-- [ ] Add lesson index using its headings
+- [x] Remove irrelevant modules from lesson
+  - [ ] Add to lesson video embeds and their provided transcriptions
+  - [ ] Improve lesson formatting using with better detection for headings and lists
+- [ ] Add subject index using its lessons' headings
+  - [ ] Add subject's calendar to index
+  - [ ] Add brief summary to index
+- [ ] Recursively crawl over bibliographical references and other relevant external links
 - [ ] Generate richer summary using AI
+- [ ] Download static files
