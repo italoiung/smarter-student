@@ -3,7 +3,7 @@ import { UlifePage, type IApiRespose } from './Page';
 
 interface IDashboardApiResponse extends IApiRespose {
   Result: {
-    DefaultList: {
+    [K: `${string}List`]: {
       DisciplineName: string;
       ContentUrl: string;
       LessonCategoryHasProgressBar: boolean;
@@ -13,7 +13,7 @@ interface IDashboardApiResponse extends IApiRespose {
 
 export class UlifeDashboard extends UlifePage {
   static API_ROUTE = '/Student/Disciplines' as const;
-  protected _pageHref = 'https://student.ulife.com.br';
+  protected _pageHref = 'https://student.ulife.com.br/StudentHome';
 
   private _subjects: { name: string; url: string }[] = [];
 
@@ -30,10 +30,10 @@ export class UlifeDashboard extends UlifePage {
 
     if (requestUrl.pathname === UlifeDashboard.API_ROUTE) {
       const {
-        Result: { DefaultList: responseData },
+        Result: result,
       }: IDashboardApiResponse = await response.json();
 
-      this.subjects = responseData
+      this.subjects = Object.values(result).flat()
         .filter((subject) => subject.LessonCategoryHasProgressBar)
         .map((subject) => ({
           name: subject.DisciplineName,
