@@ -43,41 +43,45 @@ export class UlifeLesson extends UlifePage {
     const htmlElements = await this.page.$$eval(`.workbench .topic-title, .workbench .e-title, .workbench .T-QUADRO, .workbench .T-TABELA,
       .workbench .manage_study_action:not(.manage_study_bloco) > .slider-reborn .slide-reborn .figura,
       .workbench .manage_study_action:not(.manage_study_bloco) > .slider-reborn .slide-reborn .slide-texto,
-      .workbench .manage_study_action:not(.manage_study_bloco) > *:not(.manage_study_list, .manage_study_comments_container, 
-        .OBJETIVOS, .slider-reborn, .video-reborn, .podcast-reborn, .checker, .fillin, .flipCard, .flipper, .judge, .ordenar, .quiz, .trilha)`,
+      .workbench .manage_study_action:not(.manage_study_bloco) > .ABA .aba-content titulo,
+      .workbench .manage_study_action:not(.manage_study_bloco) > .ABA .aba-content subtitulo,
+      .workbench .manage_study_action:not(.manage_study_bloco) > .ABA .aba-content > *:not(.acessibility-hidden),
+      .workbench .manage_study_action:not(.manage_study_bloco) > *:not(
+        .manage_study_list, .manage_study_comments_container, .ABA, .slider-reborn, .video-reborn, .podcast-reborn,
+        .slider, .linhadotempo, .audiotranscricao, .author-anima, .bg-game, .checker, .fillin, .flipCard, .flipper, .judge, .ordenar, .quiz, .trilha
+      )`,
       (elements) =>
         elements.map((element) => {
-          const textContent = element.textContent?.trim().replace(/(\n\s+)|(\n*\t+\n*\s*)/gm, '\n');
-          if (element.classList.contains('topic-title')) return `# ${textContent}`;
-          if (element.classList.contains('e-title')) return `## ${textContent}`;
-          if (element.classList.contains('T-QUADRO') || element.classList.contains('T-TABELA')) return `### ${textContent}`;
-          if (element.classList.contains('quote')) return `> ${textContent}`;
-          if (element.classList.contains('apostila-reborn') || element.classList.contains('saibamais-reborn')) return `[${textContent}](${element.querySelector('a')?.href})`;
+          if (element.tagName === 'TABLE') return element.outerHTML;
+
+          const textContent = element.textContent?.trim().replace(/(\s*\n\s*)|(\s*\t+\s*)/gm, '\n').replace(/(\n+\n\n*)|(\n*\n\n+)/gm, '\n\n');
+          if (!textContent) return '';
+
+          const singleLineContent = textContent.replace(/\n+/gm, ' - ');
+          if (element.classList.contains('topic-title')) return `# ${singleLineContent}`;
+          if (element.classList.contains('e-title')) return `## ${singleLineContent}`;
+          if (
+            element.classList.contains('T-QUADRO') ||
+            element.classList.contains('T-TABELA') ||
+            element.tagName === 'TITULO'
+          ) return `### ${singleLineContent}`;
+          if (element.tagName === 'SUBTITULO') return `#### ${singleLineContent}`;
+          if (element.classList.contains('quote')) return `> ${singleLineContent}`;
+
           const imageContent = element.querySelector('img');
-          if (!imageContent) return `${textContent}`;
-          if (element.classList.contains('figura')) return `### ${textContent}\n![${imageContent.alt}](${imageContent.src})`;
-          return `${textContent}\n![${imageContent.alt}](${imageContent.src})`
+          const externalLink = element.querySelector('a');
+          if (!imageContent)
+            return externalLink?.href.startsWith('http') && !textContent?.includes(externalLink.href)
+              ? `[${singleLineContent}](${externalLink?.href})`
+              : `${textContent}`;
+
+          const imageTitle = (imageContent.alt || imageContent.title).trim().replace(/([\s\n]*\n[\s\n]*)+/gm, ' - ');
+          if (element.classList.contains('figura'))
+            return `### ${singleLineContent}\n\n![${imageTitle}](${imageContent.src})`;
+          return `${textContent}\n\n![${imageTitle}](${imageContent.src})`;
         }),
     );
 
     this._content = [...this._content, ...htmlElements];
-
-    const ampFrameHandler = await this.page.$('.manage_study_action:last-of-type > div > iframe');
-    const ampFrame = await ampFrameHandler?.contentFrame();
-
-    if (ampFrame) {
-      const ampContent = await ampFrame.$$eval('amp-story-page', (elements) =>
-        elements.map((element) => 
-          {
-            const heading = element.querySelector('amp-story-grid-layer[template="vertical"]')?.textContent?.trim() || '';
-            const body = element.querySelector('amp-story-grid-layer[template="vertical"].bottom')?.textContent?.trim() || '';
-
-            return `### ${heading}\n${body}`;
-          }
-        ),
-      );
-
-      this._content = [...this._content, '## Resumo', ...ampContent];
-    }
   }
 }
