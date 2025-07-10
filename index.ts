@@ -38,6 +38,8 @@ try {
 
 await main.close();
 
+const queue = [] as Promise<void>[];
+
 for (const { name: subjectName, url: subjectUrl } of dashboard.subjects) {
   const subject = new UlifeSubject(await browser.newPage(), subjectUrl);
 
@@ -47,24 +49,30 @@ for (const { name: subjectName, url: subjectUrl } of dashboard.subjects) {
     console.log('Subject: ', subjectName, ' is ready with ', subject.lessons.length, 'lessons.\n');
 
     for (const { name: lessonName, url: lessonUrl } of subject.lessons) {
-      try {
-        const lesson = new UlifeLesson(await browser.newPage(), lessonUrl);
+      queue.push((async () => {
+        try {
+          const lesson = new UlifeLesson(await browser.newPage(), lessonUrl);
 
-        await lesson.init();
-        console.log('Lesson: ', lessonName, ' from: ', subjectName, ' is ready.\n');
+          await lesson.init();
+          console.log('Lesson: ', lessonName, ' from: ', subjectName, ' is ready.\n');
 
-        await Bun.write(`${process.env.OBSIDIAN_VAULT_DIR}/${subjectName}/${lessonName}.md`, lesson.content);
+          await Bun.write(`${process.env.OBSIDIAN_VAULT_DIR}/${subjectName}/${lessonName}.md`, lesson.content);
 
-        await lesson.destroy();
-      } catch (e) {
-        console.error('Failed to init lesson: ', lessonName, '\n', e);
-      }
+          await lesson.destroy();
+        } catch (e) {
+          console.error('Failed to init lesson: ', lessonName, '\n', e);
+        }
+      })());
     }
 
     await subject.destroy();
   } catch (e) {
     console.error('Failed to init subject: ', subjectName, ' with ', subject.lessons.length, 'lessons.\n', e);
   }
+}
+
+while (queue.length > 0) {
+  await Promise.all(queue.splice(0, 8));
 }
 
 process.on('SIGINT', async () => {
