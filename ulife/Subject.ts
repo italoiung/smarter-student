@@ -39,11 +39,13 @@ export class UlifeSubject extends UlifePage {
       const { Result: responseData, HasMoreLessons: hasMore }: ISubjectApiResponse = await response.json();
 
       this.lessons = responseData
-        .filter((lesson) => lesson.LessonName.startsWith('Unidade'))
-        .map(({ StudentLessonCategoryList: lessons }) => ({
-          name: lessons[0].LessonCategoryName,
-          url: lessons[0].StudentCategoryUrl,
-        }));
+        .filter(({ LessonName: subjectName }) => subjectName.startsWith('Unidade'))
+        .map(({ StudentLessonCategoryList: lessons, LessonName: subjectName }) => lessons
+          .filter(({ LessonCategoryName: lessonName }) => !/^[\d\W]*(fórum|referências)/ui.test(lessonName))
+          .map(({ LessonCategoryName: lessonName, StudentCategoryUrl: url }, lessonIndex) => ({
+            name: lessonName.replace(/^[\d\W(?:unidade)]*(.*)[\W(?:\(\w+\))]*$/ui, `${subjectName.trim()} - ${this.lessons.length + lessonIndex} - $1`).trim(),
+            url,
+        }))).flat();
 
       if (!hasMore && this.status !== 'loaded') this.status = 'loaded';
     }
