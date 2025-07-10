@@ -7,6 +7,7 @@ interface IDashboardApiResponse extends IApiRespose {
       DisciplineName: string;
       ContentUrl: string;
       LessonCategoryHasProgressBar: boolean;
+      ModuleStepName: string;
     }[];
   };
 }
@@ -36,7 +37,7 @@ export class UlifeDashboard extends UlifePage {
       this.subjects = Object.values(result).flat()
         .filter((subject) => subject.LessonCategoryHasProgressBar)
         .map((subject) => ({
-          name: subject.DisciplineName,
+          name: `${subject.DisciplineName}/${subject.ModuleStepName}`,
           url: subject.ContentUrl,
         }));
 
