@@ -40,7 +40,7 @@ export class UlifeDashboard extends UlifePage {
           url: subject.ContentUrl,
         }));
 
-      this.setStatusReady();
+      if (this.status !== 'loaded') this.status = 'loaded';
     }
   };
 }

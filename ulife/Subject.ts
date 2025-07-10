@@ -45,7 +45,7 @@ export class UlifeSubject extends UlifePage {
           url: lessons[0].StudentCategoryUrl,
         }));
 
-      if (!hasMore) this.setStatusReady();
+      if (!hasMore && this.status !== 'loaded') this.status = 'loaded';
     }
   };
 }

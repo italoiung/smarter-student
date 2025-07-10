@@ -16,6 +16,7 @@ export class UlifeLesson extends UlifePage {
   }
 
   public async init() {
+    this.status = 'loaded';
     await super.init();
 
     await this.page.locator('iframe.iframeFullCont').wait();

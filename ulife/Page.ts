@@ -12,12 +12,29 @@ export abstract class UlifePage {
     return this._pageHref;
   }
 
-  protected setStatusReady = (_?: unknown) => {};
-  protected setStatusFailed = (_?: unknown) => {};
-  public ready = new Promise((resolve, reject) => {
-    this.setStatusReady = resolve;
-    this.setStatusFailed = reject;
+  private _setStatusReady = (_?: unknown) => {};
+  private _setStatusFailed = (_?: unknown) => {};
+  private _status: 'loaded' | 'error' | 'stale' | 'struggle' = 'stale';
+
+  public get status() {
+    return this._status;
+  }
+
+  protected set status(res) {
+    if (res === 'loaded') this._setStatusReady();
+    if (res === 'error') this._setStatusFailed();
+
+    this._status = res;
+  }
+
+  private _ready = new Promise((resolve, reject) => {
+    this._setStatusReady = resolve;
+    this._setStatusFailed = reject;
   });
+
+  public get ready() {
+    return this._ready;
+  }
 
   constructor(protected page: Page) {}
 
@@ -41,8 +58,12 @@ export abstract class UlifePage {
     while (true) {
       try {
         await this.page.locator('p:not(.ng-hide) > a.showMoreButton.showMoreBot').setTimeout(4000).click();
+        if (this.status === 'struggle') this.status = 'stale';
       } catch {
-        break;
+        if (this.status !== 'stale' && this.status !== 'struggle') break;
+        console.warn(this.pageHref, 'is struggling with the load more button.')
+        if (this.status === 'stale') this.status = 'struggle';
+        else if (this.status === 'struggle') this.status = 'error';
       }
     }
   };
