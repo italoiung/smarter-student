@@ -28,28 +28,43 @@ await main.locator('.card-button.app-card.ulife').click();
 await main.waitForNavigation();
 
 const dashboard = new UlifeDashboard(await browser.newPage());
-await dashboard.init();
-await dashboard.ready;
+try {
+  await dashboard.init();
+  await dashboard.ready;
+} catch (e) {
+  console.error('Failed to init dashboard', e);
+  process.exit(1);
+}
 
 await main.close();
 
 for (const { name: subjectName, url: subjectUrl } of dashboard.subjects) {
   const subject = new UlifeSubject(await browser.newPage(), subjectUrl);
 
-  await subject.init();
-  await subject.ready;
+  try {
+    await subject.init();
+    await subject.ready;
+    console.log('Subject: ', subjectName, ' is ready with ', subject.lessons.length, 'lessons.\n');
 
-  for (const { name: lessonName, url: lessonUrl } of subject.lessons) {
-    const lesson = new UlifeLesson(await browser.newPage(), lessonUrl);
+    for (const { name: lessonName, url: lessonUrl } of subject.lessons) {
+      try {
+        const lesson = new UlifeLesson(await browser.newPage(), lessonUrl);
 
-    await lesson.init();
+        await lesson.init();
+        console.log('Lesson: ', lessonName, ' from: ', subjectName, ' is ready.\n');
 
-    await Bun.write(`${process.env.OBSIDIAN_VAULT_DIR}/${subjectName}/${lessonName}.md`, lesson.content);
+        await Bun.write(`${process.env.OBSIDIAN_VAULT_DIR}/${subjectName}/${lessonName}.md`, lesson.content);
 
-    await lesson.destroy();
+        await lesson.destroy();
+      } catch (e) {
+        console.error('Failed to init lesson: ', lessonName, '\n', e);
+      }
+    }
+
+    await subject.destroy();
+  } catch (e) {
+    console.error('Failed to init subject: ', subjectName, ' with ', subject.lessons.length, 'lessons.\n', e);
   }
-
-  await subject.destroy();
 }
 
 process.on('SIGINT', async () => {
